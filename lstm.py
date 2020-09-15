@@ -62,7 +62,7 @@ class LstmParam:
         self.bo_diff = np.zeros_like(self.bo) 
 
 class LstmState:
-    def __init__(self, mem_cell_ct, x_dim):
+    def __init__(self, mem_cell_ct):
         self.g = np.zeros(mem_cell_ct)
         self.i = np.zeros(mem_cell_ct)
         self.f = np.zeros(mem_cell_ct)
@@ -90,12 +90,13 @@ class LstmNode:
 
         # concatenate x(t) and h(t-1)
         xc = np.hstack((x,  h_prev))
-        self.state.g = np.tanh(np.dot(self.param.wg, xc) + self.param.bg)
-        self.state.i = sigmoid(np.dot(self.param.wi, xc) + self.param.bi)
-        self.state.f = sigmoid(np.dot(self.param.wf, xc) + self.param.bf)
-        self.state.o = sigmoid(np.dot(self.param.wo, xc) + self.param.bo)
-        self.state.s = self.state.g * self.state.i + s_prev * self.state.f
-        self.state.h = self.state.s * self.state.o
+        # Change the formula according to  http://colah.github.io/posts/2015-08-Understanding-LSTMs/
+        self.state.g = np.tanh(np.dot(self.param.wg, xc) + self.param.bg)  # C~_t
+        self.state.i = sigmoid(np.dot(self.param.wi, xc) + self.param.bi)  # i_t
+        self.state.f = sigmoid(np.dot(self.param.wf, xc) + self.param.bf)  # f_t
+        self.state.o = sigmoid(np.dot(self.param.wo, xc) + self.param.bo)  # o_t
+        self.state.s = self.state.g * self.state.i + s_prev * self.state.f  # C_t, s_prev is C_(t-1)
+        self.state.h = tanh(self.state.s) * self.state.o  # h_t : h_t = o_t * tanh(C_t)
 
         self.xc = xc
     
